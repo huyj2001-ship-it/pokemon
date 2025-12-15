@@ -9,6 +9,8 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -27,6 +29,8 @@ public class MainApp extends Application {
     private ComboBox<String> cbRarity = new ComboBox<>();
     private TextField tfSetName = new TextField();
     private TextField tfQuantity = new TextField();
+    private TextField tfImageUrl = new TextField();
+    private ImageView imageView = new ImageView();
     private TextField tfSearch = new TextField();
 
     // 数据源
@@ -133,6 +137,31 @@ public class MainApp extends Application {
         cbType.getItems().addAll("Fire", "Water", "Grass", "Electric", "Psychic", "Fighting", "Darkness", "Metal", "Fairy", "Dragon", "Colorless");
         cbRarity.getItems().addAll("Common", "Uncommon", "Rare", "Ultra Rare", "Secret Rare");
 
+        // Image Preview Setup
+        imageView.setFitHeight(150);
+        imageView.setFitWidth(100);
+        imageView.setPreserveRatio(true);
+        imageView.setStyle("-fx-border-color: gray; -fx-border-width: 1;");
+        Label lblImgPreview = new Label("No Image");
+        StackPane imgPane = new StackPane(lblImgPreview, imageView);
+        imgPane.setPrefSize(100, 150);
+
+        // Update Image when URL changes
+        tfImageUrl.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.trim().isEmpty()) {
+                try {
+                    imageView.setImage(new Image(newVal, true)); // background loading
+                    lblImgPreview.setVisible(false);
+                } catch (Exception e) {
+                    imageView.setImage(null);
+                    lblImgPreview.setVisible(true);
+                }
+            } else {
+                imageView.setImage(null);
+                lblImgPreview.setVisible(true);
+            }
+        });
+
         // 表单布局
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -151,6 +180,11 @@ public class MainApp extends Application {
         grid.add(tfSetName, 5, 0);
         grid.add(new Label("Quantity:"), 4, 1);
         grid.add(tfQuantity, 5, 1);
+        grid.add(new Label("Image URL:"), 0, 2);
+        grid.add(tfImageUrl, 1, 2, 5, 1);
+
+        HBox formAndImage = new HBox(20, grid, imgPane);
+        formAndImage.setPadding(new Insets(10));
 
         // CRUD 按钮
         Button btnAdd = new Button("Add Card");
@@ -169,7 +203,7 @@ public class MainApp extends Application {
         HBox buttonBox = new HBox(10, btnAdd, btnUpdate, btnDelete, btnClear);
         buttonBox.setPadding(new Insets(10));
 
-        VBox bottomBox = new VBox(grid, buttonBox);
+        VBox bottomBox = new VBox(formAndImage, buttonBox);
         bottomBox.setStyle("-fx-border-color: lightgray; -fx-border-width: 1px 0 0 0;");
         return bottomBox;
     }
@@ -190,7 +224,8 @@ public class MainApp extends Application {
                     id, name,
                     cbType.getValue() != null ? cbType.getValue() : "N/A",
                     cbRarity.getValue() != null ? cbRarity.getValue() : "N/A",
-                    tfSetName.getText(), qty
+                    tfSetName.getText(), qty,
+                    tfImageUrl.getText()
             );
 
             masterData.add(newCard);
@@ -214,6 +249,7 @@ public class MainApp extends Application {
             selected.setRarity(cbRarity.getValue());
             selected.setSetName(tfSetName.getText());
             selected.setQuantity(Integer.parseInt(tfQuantity.getText()));
+            selected.setImageUrl(tfImageUrl.getText());
 
             table.refresh(); // 刷新视图
             clearForm();
@@ -241,6 +277,7 @@ public class MainApp extends Application {
         cbRarity.setValue(card.getRarity());
         tfSetName.setText(card.getSetName());
         tfQuantity.setText(String.valueOf(card.getQuantity()));
+        tfImageUrl.setText(card.getImageUrl());
     }
 
     private void clearForm() {
@@ -250,6 +287,7 @@ public class MainApp extends Application {
         cbRarity.setValue(null);
         tfSetName.clear();
         tfQuantity.clear();
+        tfImageUrl.clear();
         table.getSelectionModel().clearSelection();
     }
 
