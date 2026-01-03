@@ -36,6 +36,9 @@ public class MainApp extends Application {
     // 数据源
     private ObservableList<Card> masterData = DataHandler.loadData(DataHandler.getDefaultFilePath());
     private FilteredList<Card> filteredData = new FilteredList<>(masterData, p -> true);
+    
+    // API Service
+    private PokemonTcgApiService apiService = new PokemonTcgApiService();
 
     public static void main(String[] args) {
         launch(args);
@@ -127,7 +130,12 @@ public class MainApp extends Application {
         Button btnExport = new Button("Export CSV");
         btnExport.setOnAction(e -> handleExport(stage));
 
-        HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport);
+        // Online Search Button
+        Button btnSearchOnline = new Button("Search Online");
+        btnSearchOnline.setStyle("-fx-background-color: #e6f7ff; -fx-text-fill: #0066cc; -fx-font-weight: bold;");
+        btnSearchOnline.setOnAction(e -> showApiSearchDialog());
+
+        HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport, btnSearchOnline);
         topBox.setPadding(new Insets(10));
         return topBox;
     }
@@ -207,6 +215,86 @@ public class MainApp extends Application {
         bottomBox.setStyle("-fx-border-color: lightgray; -fx-border-width: 1px 0 0 0;");
         return bottomBox;
     }
+
+    // --- 业务逻辑方法 (Controller Logic) ---
+
+    private void showApiSearchDialog() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Search Pokémon TCG API");
+        dialog.setHeaderText("Search for cards online");
+        dialog.setContentText("Enter card name:");
+
+        dialog.showAndWait().ifPresent(query -> {
+            if (query.trim().isEmpty()) return;
+
+            // Simple loading feedback
+            Alert loadingAlert = new Alert(Alert.AlertType.INFORMATION);
+            loadingAlert.setTitle("Loading");
+            loadingAlert.setHeaderText("Searching...");
+            loadingAlert.setContentText("Please wait while we fetch data from the API.");
+            loadingAlert.show();
+
+            // Run in background thread to avoid freezing UI
+            new Thread(() -> {
+                try {
+                    java.util.List<Card> results = apiService.searchCards(query);
+                    
+                    // Update UI on JavaFX Application Thread
+                    javafx.application.Platform.runLater(() -> {
+                        loadingAlert.close();
+                        showSearchResults(results);
+                    });
+                } catch (Exception e) {
+                    javafx.application.Platform.runLater(() -> {
+                        loadingAlert.close();
+                        showAlert("Error", "Failed to fetch data: " + e.getMessage());
+                    });
+                }
+            }).start();
+        });
+    }
+
+    private void showSearchResults(java.util.List<Card> results) {
+        Stage resultStage = new Stage();
+        resultStage.setTitle("Search Results");
+
+        TableView<Card> resultTable = new TableView<>();
+        
+        TableColumn<Card, String> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(cellData -> cellData.getValue().idProperty());
+        
+        TableColumn<Card, String> colName = new TableColumn<>("Name");
+        colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+        
+        TableColumn<Card, String> colSet = new TableColumn<>("Set");
+        colSet.setCellValueFactory(cellData -> cellData.getValue().setNameProperty());
+        
+        TableColumn<Card, String> colRarity = new TableColumn<>("Rarity");
+        colRarity.setCellValueFactory(cellData -> cellData.getValue().rarityProperty());
+        
+        resultTable.getColumns().addAll(colName, colSet, colRarity, colId);
+        resultTable.setItems(FXCollections.observableArrayList(results));
+
+        Button btnImport = new Button("Import Selected");
+        btnImport.setOnAction(e -> {
+            Card selected = resultTable.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                // Check if already exists (optional, simply add for now)
+                masterData.add(selected);
+                DataHandler.saveData(masterData, DataHandler.getDefaultFilePath());
+                showAlert("Success", "Card imported: " + selected.getName());
+                resultStage.close();
+            }
+        });
+
+        VBox layout = new VBox(10, resultTable, btnImport);
+        layout.setPadding(new Insets(10));
+        
+        Scene scene = new Scene(layout, 600, 400);
+        resultStage.setScene(scene);
+        resultStage.show();
+    }
+
 
     // --- 业务逻辑方法 (Controller Logic) ---
 
