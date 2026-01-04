@@ -130,16 +130,76 @@ public class MainApp extends Application {
         Button btnExport = new Button("Export CSV");
         btnExport.setOnAction(e -> handleExport(stage));
 
-        // Online Search Button
-        Button btnSearchOnline = new Button("Search Online");
-        btnSearchOnline.setStyle("-fx-background-color: #e6f7ff; -fx-text-fill: #0066cc; -fx-font-weight: bold;");
-        btnSearchOnline.setOnAction(e -> showApiSearchDialog());
+        // Sync Data Button
+        Button btnSyncData = new Button("Sync Data");
+        btnSyncData.setStyle("-fx-background-color: #fff0f0; -fx-text-fill: #cc0000; -fx-font-weight: bold;");
+        btnSyncData.setOnAction(e -> handleSyncData());
 
-        HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport, btnSearchOnline);
+        // Local Search Button (replacing online search)
+        Button btnSearchLocal = new Button("Search Local");
+        btnSearchLocal.setStyle("-fx-background-color: #e6f7ff; -fx-text-fill: #0066cc; -fx-font-weight: bold;");
+        btnSearchLocal.setOnAction(e -> showLocalSearchDialog());
+
+        HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport, btnSyncData, btnSearchLocal);
         topBox.setPadding(new Insets(10));
         return topBox;
     }
 
+    private void handleSyncData() {
+        Alert loadingAlert = new Alert(Alert.AlertType.INFORMATION);
+        loadingAlert.setTitle("Syncing Data");
+        loadingAlert.setHeaderText("Downloading cards...");
+        loadingAlert.setContentText("Fetching data from API. This may take a moment...");
+        loadingAlert.show();
+
+        new Thread(() -> {
+            try {
+                java.util.List<Card> allCards = new java.util.ArrayList<>();
+                // Fetch 5 pages (~1250 cards)
+                for (int i = 1; i <= 5; i++) {
+                    java.util.List<Card> pageCards = apiService.fetchCardsByPage(i, 250);
+                    allCards.addAll(pageCards);
+                }
+                
+                DataHandler.saveLocalCache(allCards, DataHandler.getCacheFilePath());
+
+                javafx.application.Platform.runLater(() -> {
+                    loadingAlert.close();
+                    showAlert("Success", "Downloaded " + allCards.size() + " cards to local cache.");
+                });
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> {
+                    loadingAlert.close();
+                    showAlert("Error", "Sync failed: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    private void showLocalSearchDialog() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Search Local Database");
+        dialog.setHeaderText("Search in downloaded data");
+        dialog.setContentText("Enter card name:");
+
+        dialog.showAndWait().ifPresent(query -> {
+            if (query.trim().isEmpty()) return;
+            
+            String lowerQuery = query.toLowerCase();
+            ObservableList<Card> cachedCards = DataHandler.loadLocalCache(DataHandler.getCacheFilePath());
+            
+            if (cachedCards.isEmpty()) {
+                showAlert("Info", "Local cache is empty. Please 'Sync Data' first.");
+                return;
+            }
+
+            java.util.List<Card> results = cachedCards.stream()
+                    .filter(c -> c.getName().toLowerCase().contains(lowerQuery))
+                    .collect(Collectors.toList());
+
+            showSearchResults(results);
+        });
+    }
     private VBox createBottomForm() {
         // 初始化下拉框
         cbType.getItems().addAll("Fire", "Water", "Grass", "Electric", "Psychic", "Fighting", "Darkness", "Metal", "Fairy", "Dragon", "Colorless");
@@ -217,42 +277,6 @@ public class MainApp extends Application {
     }
 
     // --- 业务逻辑方法 (Controller Logic) ---
-
-    private void showApiSearchDialog() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Search Pokémon TCG API");
-        dialog.setHeaderText("Search for cards online");
-        dialog.setContentText("Enter card name:");
-
-        dialog.showAndWait().ifPresent(query -> {
-            if (query.trim().isEmpty()) return;
-
-            // Simple loading feedback
-            Alert loadingAlert = new Alert(Alert.AlertType.INFORMATION);
-            loadingAlert.setTitle("Loading");
-            loadingAlert.setHeaderText("Searching...");
-            loadingAlert.setContentText("Please wait while we fetch data from the API.");
-            loadingAlert.show();
-
-            // Run in background thread to avoid freezing UI
-            new Thread(() -> {
-                try {
-                    java.util.List<Card> results = apiService.searchCards(query);
-                    
-                    // Update UI on JavaFX Application Thread
-                    javafx.application.Platform.runLater(() -> {
-                        loadingAlert.close();
-                        showSearchResults(results);
-                    });
-                } catch (Exception e) {
-                    javafx.application.Platform.runLater(() -> {
-                        loadingAlert.close();
-                        showAlert("Error", "Failed to fetch data: " + e.getMessage());
-                    });
-                }
-            }).start();
-        });
-    }
 
     private void showSearchResults(java.util.List<Card> results) {
         Stage resultStage = new Stage();
