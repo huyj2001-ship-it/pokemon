@@ -41,6 +41,8 @@ public class MainApp extends Application {
     private PokemonTcgApiService apiService = new PokemonTcgApiService();
 
     public static void main(String[] args) {
+        // Attempt to use system proxy (VPN) to solve connectivity issues
+        System.setProperty("java.net.useSystemProxies", "true");
         launch(args);
     }
 
@@ -155,8 +157,9 @@ public class MainApp extends Application {
         new Thread(() -> {
             try {
                 java.util.List<Card> allCards = new java.util.ArrayList<>();
-                // Fetch 5 pages (~1250 cards)
-                for (int i = 1; i <= 5; i++) {
+                // Fetch only 1 page (250 cards) for testing connectivity
+                // Reducing workload to prevent timeout on slow connections
+                for (int i = 1; i <= 1; i++) {
                     java.util.List<Card> pageCards = apiService.fetchCardsByPage(i, 250);
                     allCards.addAll(pageCards);
                 }
@@ -167,13 +170,36 @@ public class MainApp extends Application {
                     loadingAlert.close();
                     showAlert("Success", "Downloaded " + allCards.size() + " cards to local cache.");
                 });
+            } catch (java.net.http.HttpTimeoutException e) {
+                javafx.application.Platform.runLater(() -> {
+                    loadingAlert.close();
+                    askToLoadSampleData("Connection Timeout", "Server is too slow or down (Error 504).\nLoad sample data to continue development?");
+                });
+            } catch (java.io.IOException e) {
+                javafx.application.Platform.runLater(() -> {
+                    loadingAlert.close();
+                    askToLoadSampleData("Network/Server Error", "Cannot connect to API (likely Error 504).\nLoad sample data to continue development?");
+                });
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() -> {
                     loadingAlert.close();
-                    showAlert("Error", "Sync failed: " + e.getMessage());
+                    askToLoadSampleData("Unknown Error", "Sync failed: " + e.getMessage() + "\nLoad sample data?");
                 });
             }
         }).start();
+    }
+
+    private void askToLoadSampleData(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText("API Connection Failed");
+        alert.setContentText(content);
+        
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                loadSampleData();
+            }
+        });
     }
 
     private void showLocalSearchDialog() {
@@ -444,6 +470,18 @@ public class MainApp extends Application {
             DataHandler.saveData(masterData, file.getAbsolutePath());
             showAlert("Success", "Data exported successfully.");
         }
+    }
+
+    private void loadSampleData() {
+        masterData.add(new Card("base1-1", "Alakazam", "Psychic", "Rare Holo", "Base", 1, "https://images.pokemontcg.io/base1/1.png"));
+        masterData.add(new Card("base1-4", "Charizard", "Fire", "Rare Holo", "Base", 1, "https://images.pokemontcg.io/base1/4.png"));
+        masterData.add(new Card("base1-15", "Venusaur", "Grass", "Rare Holo", "Base", 1, "https://images.pokemontcg.io/base1/15.png"));
+        masterData.add(new Card("base1-24", "Charmeleon", "Fire", "Uncommon", "Base", 2, "https://images.pokemontcg.io/base1/24.png"));
+        masterData.add(new Card("base1-42", "Wartortle", "Water", "Uncommon", "Base", 2, "https://images.pokemontcg.io/base1/42.png"));
+        masterData.add(new Card("base1-58", "Pikachu", "Lightning", "Common", "Base", 4, "https://images.pokemontcg.io/base1/58.png"));
+        
+        DataHandler.saveData(masterData, DataHandler.getDefaultFilePath());
+        showAlert("Success", "Loaded " + 6 + " sample cards.");
     }
 
     private void showAlert(String title, String content) {
