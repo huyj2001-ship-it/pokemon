@@ -41,7 +41,7 @@ public class PokemonTcgApiService {
                 .uri(URI.create(url))
                 .header("X-Api-Key", API_KEY)
                 .header("Accept", "application/json")
-                .timeout(java.time.Duration.ofSeconds(15)) // Request timeout
+                .timeout(java.time.Duration.ofSeconds(10)) // Request timeout
                 .GET()
                 .build();
 
@@ -60,7 +60,7 @@ public class PokemonTcgApiService {
                 .uri(URI.create(url))
                 .header("X-Api-Key", API_KEY)
                 .header("Accept", "application/json")
-                .timeout(java.time.Duration.ofSeconds(20))
+                .timeout(java.time.Duration.ofSeconds(10))
                 .GET()
                 .build();
 
