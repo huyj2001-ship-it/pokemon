@@ -44,7 +44,6 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Pokémon Card Inventory Manager");
 
-        // 1. 设置表格列 (Table Columns)12
         TableColumn<Card, String> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(cellData -> cellData.getValue().idProperty());
 
@@ -65,25 +64,20 @@ public class MainApp extends Application {
 
         table.getColumns().addAll(colId, colName, colType, colRarity, colSet, colQty);
 
-        // 绑定过滤后的数据到表格
         SortedList<Card> sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(table.comparatorProperty());
         table.setItems(sortedData);
 
-        // 表格点击事件：填充表单
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 populateForm(newSelection);
             }
         });
 
-        //创建顶部菜单 (Menu Bar & Search)
         HBox topBar = createTopBar(primaryStage);
 
-        // 创建底部表单 (Form & CRUD Buttons)
         VBox bottomForm = createBottomForm();
 
-        //布局组装
         BorderPane root = new BorderPane();
         root.setTop(topBar);
         root.setCenter(table);
@@ -94,22 +88,17 @@ public class MainApp extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // 退出时自动保存
         primaryStage.setOnCloseRequest(event -> DataHandler.saveData(masterData, DataHandler.getDefaultFilePath()));
     }
 
-    // --- GUI 组件构建方法 ---
 
     private HBox createTopBar(Stage stage) {
-        // 搜索框
         Label searchLbl = new Label("Search / Filter: ");
         tfSearch.setPromptText("Type name, type, or set...");
-        // 实时过滤逻辑
         tfSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             filteredData.setPredicate(card -> {
                 if (newValue == null || newValue.isEmpty()) return true;
                 String lowerCaseFilter = newValue.toLowerCase();
-                // 多字段匹配
                 if (card.getName().toLowerCase().contains(lowerCaseFilter)) return true;
                 if (card.getType().toLowerCase().contains(lowerCaseFilter)) return true;
                 if (card.getSetName().toLowerCase().contains(lowerCaseFilter)) return true;
@@ -117,7 +106,6 @@ public class MainApp extends Application {
             });
         });
 
-        // 功能按钮
         Button btnStats = new Button("View Statistics");
         btnStats.setOnAction(e -> showStatistics());
 
@@ -127,17 +115,14 @@ public class MainApp extends Application {
         Button btnExport = new Button("Export CSV");
         btnExport.setOnAction(e -> handleExport(stage));
 
-        // Sync Data Button
         Button btnSyncData = new Button("Sync Data");
         btnSyncData.getStyleClass().add("sync-button");
         btnSyncData.setOnAction(e -> handleSyncData());
 
-        // Local Search Button (replacing online search)
         Button btnSearchLocal = new Button("Search Local");
         btnSearchLocal.getStyleClass().add("local-search-button");
         btnSearchLocal.setOnAction(e -> showLocalSearchDialog());
 
-        // Import Local DB Button
         Button btnImportDb = new Button("Import DB");
         btnImportDb.getStyleClass().add("import-db-button");
         btnImportDb.setOnAction(e -> handleImportDb());
@@ -243,21 +228,17 @@ public class MainApp extends Application {
         });
     }
     private VBox createBottomForm() {
-        // 初始化下拉框
         cbType.getItems().addAll("Fire", "Water", "Grass", "Electric", "Psychic", "Fighting", "Darkness", "Metal", "Fairy", "Dragon", "Colorless");
         cbRarity.getItems().addAll("Common", "Uncommon", "Rare", "Ultra Rare", "Secret Rare");
 
-        // Image Preview Setup
         imageView.setFitHeight(150);
         imageView.setFitWidth(100);
         imageView.setPreserveRatio(true);
-        // imageView.setStyle("-fx-border-color: gray; -fx-border-width: 1;"); // Removed inline style
         Label lblImgPreview = new Label("No Image");
         StackPane imgPane = new StackPane(lblImgPreview, imageView);
         imgPane.setPrefSize(100, 150);
         imgPane.getStyleClass().add("image-view-wrapper");
 
-        // Update Image when URL changes
         tfImageUrl.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && !newVal.trim().isEmpty()) {
                 try {
@@ -273,7 +254,6 @@ public class MainApp extends Application {
             }
         });
 
-        // 表单布局
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -297,7 +277,6 @@ public class MainApp extends Application {
         HBox formAndImage = new HBox(20, grid, imgPane);
         formAndImage.setPadding(new Insets(10));
 
-        // CRUD 按钮
         Button btnAdd = new Button("Add Card");
         btnAdd.getStyleClass().add("primary-button");
         btnAdd.setOnAction(e -> addCard());
@@ -321,7 +300,6 @@ public class MainApp extends Application {
         return bottomBox;
     }
 
-    // --- 业务逻辑方法 (Controller Logic) ---
 
     private void showSearchResults(java.util.List<Card> results) {
         Stage resultStage = new Stage();
@@ -348,7 +326,6 @@ public class MainApp extends Application {
         btnImport.setOnAction(e -> {
             Card selected = resultTable.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                // Check if already exists (optional, simply add for now)
                 masterData.add(selected);
                 DataHandler.saveData(masterData, DataHandler.getDefaultFilePath());
                 showAlert("Success", "Card imported: " + selected.getName());
@@ -364,8 +341,6 @@ public class MainApp extends Application {
         resultStage.show();
     }
 
-
-    // --- 业务逻辑方法 (Controller Logic) ---
 
     private void addCard() {
         try {
@@ -408,7 +383,7 @@ public class MainApp extends Application {
             selected.setQuantity(Integer.parseInt(tfQuantity.getText()));
             selected.setImageUrl(tfImageUrl.getText());
 
-            table.refresh(); // 刷新视图
+            table.refresh();
             clearForm();
             DataHandler.saveData(masterData, DataHandler.getDefaultFilePath());
         } catch (NumberFormatException e) {
@@ -450,20 +425,47 @@ public class MainApp extends Application {
 
 
     private void showStatistics() {
-        Map<String, Integer> stats = masterData.stream()
-                .collect(Collectors.groupingBy(Card::getType, Collectors.summingInt(Card::getQuantity)));
+        Stage statsStage = new Stage();
+        statsStage.setTitle("Inventory Statistics");
 
-        ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
-        stats.forEach((type, count) -> pieChartData.add(new PieChart.Data(type, count)));
+        ComboBox<String> cbGroupBy = new ComboBox<>();
+        cbGroupBy.getItems().addAll("Type", "Rarity", "Set Name");
+        cbGroupBy.setValue("Type");
 
-        PieChart chart = new PieChart(pieChartData);
+        PieChart chart = new PieChart();
         chart.setTitle("Inventory by Type");
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Statistics");
-        alert.setHeaderText("Total Cards: " + masterData.stream().mapToInt(Card::getQuantity).sum());
-        alert.getDialogPane().setContent(chart);
-        alert.showAndWait();
+        Label totalLabel = new Label("Total Cards: " + masterData.stream().mapToInt(Card::getQuantity).sum());
+
+        Runnable updateChart = () -> {
+            String groupBy = cbGroupBy.getValue();
+            Map<String, Integer> stats;
+
+            if ("Rarity".equals(groupBy)) {
+                stats = masterData.stream().collect(Collectors.groupingBy(Card::getRarity, Collectors.summingInt(Card::getQuantity)));
+            } else if ("Set Name".equals(groupBy)) {
+                stats = masterData.stream().collect(Collectors.groupingBy(Card::getSetName, Collectors.summingInt(Card::getQuantity)));
+            } else {
+                stats = masterData.stream().collect(Collectors.groupingBy(Card::getType, Collectors.summingInt(Card::getQuantity)));
+            }
+
+            ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
+            stats.forEach((type, count) -> pieChartData.add(new PieChart.Data(type, count)));
+            
+            chart.setData(pieChartData);
+            chart.setTitle("Inventory by " + groupBy);
+        };
+
+        cbGroupBy.setOnAction(e -> updateChart.run());
+        
+        updateChart.run();
+
+        VBox layout = new VBox(10, totalLabel, new Label("Group by:"), cbGroupBy, chart);
+        layout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(layout, 600, 500);
+        statsStage.setScene(scene);
+        statsStage.show();
     }
 
     private void handleImport(Stage stage) {
