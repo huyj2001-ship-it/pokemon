@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 public class MainApp extends Application {
 
-    // UI 组件
     private TableView<Card> table = new TableView<>();
     private TextField tfId = new TextField();
     private TextField tfName = new TextField();
@@ -32,16 +31,11 @@ public class MainApp extends Application {
     private TextField tfImageUrl = new TextField();
     private ImageView imageView = new ImageView();
     private TextField tfSearch = new TextField();
-
-    // 数据源
     private ObservableList<Card> masterData = DataHandler.loadData(DataHandler.getDefaultFilePath());
     private FilteredList<Card> filteredData = new FilteredList<>(masterData, p -> true);
-    
-    // API Service
     private PokemonTcgApiService apiService = new PokemonTcgApiService();
 
     public static void main(String[] args) {
-        // Attempt to use system proxy (VPN) to solve connectivity issues
         System.setProperty("java.net.useSystemProxies", "true");
         launch(args);
     }
@@ -50,7 +44,7 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Pokémon Card Inventory Manager");
 
-        // 1. 设置表格列 (Table Columns)
+        // 1. 设置表格列 (Table Columns)12
         TableColumn<Card, String> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(cellData -> cellData.getValue().idProperty());
 
@@ -96,6 +90,7 @@ public class MainApp extends Application {
         root.setBottom(bottomForm);
 
         Scene scene = new Scene(root, 900, 600);
+        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -134,17 +129,17 @@ public class MainApp extends Application {
 
         // Sync Data Button
         Button btnSyncData = new Button("Sync Data");
-        btnSyncData.setStyle("-fx-background-color: #fff0f0; -fx-text-fill: #cc0000; -fx-font-weight: bold;");
+        btnSyncData.getStyleClass().add("sync-button");
         btnSyncData.setOnAction(e -> handleSyncData());
 
         // Local Search Button (replacing online search)
         Button btnSearchLocal = new Button("Search Local");
-        btnSearchLocal.setStyle("-fx-background-color: #e6f7ff; -fx-text-fill: #0066cc; -fx-font-weight: bold;");
+        btnSearchLocal.getStyleClass().add("local-search-button");
         btnSearchLocal.setOnAction(e -> showLocalSearchDialog());
 
         // Import Local DB Button
         Button btnImportDb = new Button("Import DB");
-        btnImportDb.setStyle("-fx-background-color: #e6fff0; -fx-text-fill: #006600; -fx-font-weight: bold;");
+        btnImportDb.getStyleClass().add("import-db-button");
         btnImportDb.setOnAction(e -> handleImportDb());
 
         HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport, btnSyncData, btnSearchLocal, btnImportDb);
@@ -256,10 +251,11 @@ public class MainApp extends Application {
         imageView.setFitHeight(150);
         imageView.setFitWidth(100);
         imageView.setPreserveRatio(true);
-        imageView.setStyle("-fx-border-color: gray; -fx-border-width: 1;");
+        // imageView.setStyle("-fx-border-color: gray; -fx-border-width: 1;"); // Removed inline style
         Label lblImgPreview = new Label("No Image");
         StackPane imgPane = new StackPane(lblImgPreview, imageView);
         imgPane.setPrefSize(100, 150);
+        imgPane.getStyleClass().add("image-view-wrapper");
 
         // Update Image when URL changes
         tfImageUrl.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -303,13 +299,15 @@ public class MainApp extends Application {
 
         // CRUD 按钮
         Button btnAdd = new Button("Add Card");
+        btnAdd.getStyleClass().add("primary-button");
         btnAdd.setOnAction(e -> addCard());
 
         Button btnUpdate = new Button("Update Selected");
+        btnUpdate.getStyleClass().add("action-button");
         btnUpdate.setOnAction(e -> updateCard());
 
         Button btnDelete = new Button("Delete Selected");
-        btnDelete.setStyle("-fx-background-color: #ffcccc;"); // 红色警示
+        btnDelete.getStyleClass().add("danger-button");
         btnDelete.setOnAction(e -> deleteCard());
 
         Button btnClear = new Button("Clear Form");
