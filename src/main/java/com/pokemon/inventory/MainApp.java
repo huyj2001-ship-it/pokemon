@@ -142,7 +142,12 @@ public class MainApp extends Application {
         btnSearchLocal.setStyle("-fx-background-color: #e6f7ff; -fx-text-fill: #0066cc; -fx-font-weight: bold;");
         btnSearchLocal.setOnAction(e -> showLocalSearchDialog());
 
-        HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport, btnSyncData, btnSearchLocal);
+        // Import Local DB Button
+        Button btnImportDb = new Button("Import DB");
+        btnImportDb.setStyle("-fx-background-color: #e6fff0; -fx-text-fill: #006600; -fx-font-weight: bold;");
+        btnImportDb.setOnAction(e -> handleImportDb());
+
+        HBox topBox = new HBox(10, searchLbl, tfSearch, new Separator(), btnStats, btnImport, btnExport, btnSyncData, btnSearchLocal, btnImportDb);
         topBox.setPadding(new Insets(10));
         return topBox;
     }
@@ -186,6 +191,22 @@ public class MainApp extends Application {
                     askToLoadSampleData("Unknown Error", "Sync failed: " + e.getMessage() + "\nLoad sample data?");
                 });
             }
+        }).start();
+    }
+
+    private void handleImportDb() {
+        Alert loadingAlert = new Alert(Alert.AlertType.INFORMATION);
+        loadingAlert.setTitle("Importing Database");
+        loadingAlert.setHeaderText("Processing Local JSON Files...");
+        loadingAlert.setContentText("This may take a minute depending on the number of files.");
+        loadingAlert.show();
+
+        new Thread(() -> {
+            String result = DatabaseImporter.importData();
+            javafx.application.Platform.runLater(() -> {
+                loadingAlert.close();
+                showAlert("Import Result", result);
+            });
         }).start();
     }
 
@@ -429,10 +450,8 @@ public class MainApp extends Application {
         table.getSelectionModel().clearSelection();
     }
 
-    // --- 高级功能: 统计与导入导出 ---
 
     private void showStatistics() {
-        // 统计每种 Type 的卡片数量
         Map<String, Integer> stats = masterData.stream()
                 .collect(Collectors.groupingBy(Card::getType, Collectors.summingInt(Card::getQuantity)));
 
