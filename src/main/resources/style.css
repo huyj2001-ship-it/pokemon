@@ -1,0 +1,161 @@
+/* General Base Styles */
+.root {
+    -fx-font-family: 'Segoe UI', sans-serif;
+    -fx-base: #f4f4f4;
+    -fx-background-color: #f8f9fa;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 13px;
+}
+
+/* Text Fields and Inputs */
+.text-field, .combo-box {
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-color: #ced4da;
+    -fx-background-color: white;
+    -fx-padding: 6;
+}
+
+.text-field:focused, .combo-box:focused {
+    -fx-border-color: #3b4cca; /* Pokemon Blue */
+    -fx-effect: dropshadow(three-pass-box, rgba(59, 76, 202, 0.2), 4, 0, 0, 0);
+}
+
+/* Table View */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #dee2e6;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 0);
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #3b4cca; /* Pokemon Blue Header */
+    -fx-background-radius: 4 4 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-padding: 10;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.table-row-cell {
+    -fx-cell-size: 35px;
+}
+
+.table-row-cell:filled:selected {
+    -fx-background-color: #ffde00; /* Pokemon Yellow */
+    -fx-text-fill: black;
+}
+
+.table-row-cell:filled:selected .text {
+    -fx-fill: #2c3e50;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #f8f9fa;
+}
+
+.table-row-cell:filled:hover {
+    -fx-background-color: #e9ecef;
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: #e9ecef;
+    -fx-text-fill: #495057;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 2, 0, 0, 1);
+}
+
+.button:hover {
+    -fx-background-color: #dee2e6;
+}
+
+.button:pressed {
+    -fx-effect: none;
+    -fx-translate-y: 1;
+}
+
+.primary-button {
+    -fx-background-color: #ffde00; /* Pokemon Yellow */
+    -fx-text-fill: #2c3e50;
+    -fx-border-color: #e6c200;
+}
+
+.primary-button:hover {
+    -fx-background-color: #ffe64d;
+}
+
+.danger-button {
+    -fx-background-color: #cc0000; /* Pokemon Red */
+    -fx-text-fill: white;
+    -fx-border-color: #b30000;
+}
+
+.danger-button:hover {
+    -fx-background-color: #e60000;
+}
+
+.action-button {
+    -fx-background-color: #3b4cca; /* Pokemon Blue */
+    -fx-text-fill: white;
+    -fx-border-color: #2a3b9e;
+}
+
+.action-button:hover {
+    -fx-background-color: #4d5ed7;
+}
+
+.sync-button {
+     -fx-background-color: white;
+     -fx-text-fill: #cc0000;
+     -fx-border-color: #cc0000;
+}
+
+.sync-button:hover {
+    -fx-background-color: #fff0f0;
+}
+
+.local-search-button {
+    -fx-background-color: white;
+    -fx-text-fill: #0066cc;
+    -fx-border-color: #0066cc;
+}
+
+.local-search-button:hover {
+    -fx-background-color: #e6f7ff;
+}
+
+.import-db-button {
+    -fx-background-color: white;
+    -fx-text-fill: #006600;
+    -fx-border-color: #006600;
+}
+
+.import-db-button:hover {
+    -fx-background-color: #e6fff0;
+}
+
+/* Image View Placeholder */
+.image-view-wrapper {
+    -fx-border-color: #ced4da;
+    -fx-border-width: 2;
+    -fx-border-style: dashed;
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+}
